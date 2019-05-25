@@ -59,8 +59,8 @@ State::State(const vector<int> &_o, const vector<int> &_x, bool messy_o, bool me
     build_token();
 }
 
-State::State(const int board[8][8], bool o_side) {
-    if (o_side) {
+State::State(const int board[8][8], int role) {
+    if (role == O) {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 if (board[i][j] == O)
@@ -91,13 +91,20 @@ State State::opposite() const {
     return State(rev_vec(oo), rev_vec(xx), false, false);
 }
 
+#include <iostream>
+using namespace std;
+
 // Output operator overloading
 // Not part of project
 std::ostream &operator<<(std::ostream &output, const State &state) {
     char sq[8][8];
-    memset(sq, NONE, 64);
-    for (int i : state.o_pieces()) sq[row(i)][col(i)] = O;
-    for (int i : state.x_pieces()) sq[row(i)][col(i)] = X;
+    memset(sq, NONE, sizeof(sq));
+    for (int i : state.o_pieces()) {
+        sq[row(i)][col(i)] = O;
+    }
+    for (int i : state.x_pieces()) {
+        sq[row(i)][col(i)] = X;
+    }
     output << "~ 0 1 2 3 4 5 6 7";
     for (int i = 7; i >= 0; i--) {
         output << "\n" << i;

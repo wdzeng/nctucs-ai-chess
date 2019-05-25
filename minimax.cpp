@@ -4,11 +4,11 @@
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
+#include <iostream>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <iostream>
 #include "calc.h"
 #include "lang.h"
 
@@ -19,9 +19,13 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
+#include <iostream>
+using namespace std;
+
+
 double Minimax::next_x(const State& s, const double lim_maxx, const int depth) {
     if (depth == 0) return h(s);
-    auto expanded = expand_state(s.opposite(), record);
+    const Expansion& expanded = expand_state(s.opposite(), record);
 
     // Check leaves
     for (const Step& e : expanded /* reversed */) {
@@ -30,7 +34,7 @@ double Minimax::next_x(const State& s, const double lim_maxx, const int depth) {
     }
 
     // Search tree
-    double maxx = MIN_HEURISTIC;
+    double maxx = h(s);
     for (const Step& e : expanded) {
         const double h = next_o(e.first, maxx, depth - 1);
         if (h >= lim_maxx) return h;
@@ -41,7 +45,7 @@ double Minimax::next_x(const State& s, const double lim_maxx, const int depth) {
 
 double Minimax::next_o(const State& s /* reversed */, const double lim_minn, const int depth) {
     if (depth == 0) return -1.0 * h(s);  // Reversed
-    auto expanded = expand_state(s.opposite(), record);
+    const Expansion& expanded = expand_state(s.opposite(), record);
 
     // Check leaves
     for (const Step& e : expanded) {
@@ -49,7 +53,7 @@ double Minimax::next_o(const State& s /* reversed */, const double lim_minn, con
     }
 
     // Search tree
-    double minn = MAX_HEURISTIC;
+    double minn = -1.0 * h(s);
     for (const Step& e : expanded) {
         const double h = next_x(e.first, minn, depth - 1);
         if (h <= lim_minn) return h;
@@ -59,30 +63,33 @@ double Minimax::next_o(const State& s /* reversed */, const double lim_minn, con
 }
 
 const Step& Minimax::best_step(const State& s) {
-    const Expansion expanded = expand_state(s, record);
+    const Expansion& expanded = expand_state(s, record);
 
     // Check leaves
-    for (const Step& e : expanded) {
-        if (h(e.first) == MIN_HEURISTIC) return e;
+    for (auto&& e : expanded) {
+        if (h(e.first) == MIN_HEURISTIC) return (Step&)e;
     }
 
-    double minn = MAX_HEURISTIC;
-    vector<Step> candidates;
+    double minn = h(s);
+    vector<Step*> candidates;
+
     // Serach tree
-    for (const Step& e : expanded) {
+    for (auto&& e : expanded) {
         double h = next_x(e.first, minn, depth - 1);
         // Check if this step must lead to winning
-        if (h == MIN_HEURISTIC) return e;
+        if (h == MIN_HEURISTIC) {
+            return (Step&)e;
+        }
         if (h < minn) {
             minn = h;
             candidates.clear();
         }
         if (h == minn) {
-            candidates.push_back(e);
+            candidates.push_back((Step*)&e);
         }
     }
-
-    return candidates[rand() % candidates.size()];
+    int random_index = rand() % candidates.size();
+    return *candidates[random_index];
 }
 
 #endif
