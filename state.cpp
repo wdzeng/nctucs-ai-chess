@@ -6,6 +6,14 @@
 
 using std::vector;
 
+bool is_reflected(const vector<int> &o, const vector<int> &x) {
+    if (o.empty()) {
+        if (x.empty()) return false;
+        return col(x[0]) >= 4;
+    }
+    return col(o[0]) >= 4;
+}
+
 long identifier::build(const vector<int> &v) {
     long ret = 0;
     for (int i : v) {
@@ -27,35 +35,17 @@ long shift_to_neg(long l) {
     return l;
 }
 
-identifier State::build_token(const vector<int> &o, const vector<int> &x) {
-    bool should_reversed = !o.empty() && col(o[0]) < 4;
-    long former, latter;
-    if (!should_reversed) {
-        former = identifier::build(o);
-        latter = identifier::build(x);
-    } else {
-        vector<int> reversed_o, reversed_x;
-        for (int i : o) reversed_o.push_back(hor_rev(i));
-        for (int i : x) reversed_x.push_back(hor_rev(i));
-        sort(reversed_o.begin(), reversed_o.end());
-        sort(reversed_x.begin(), reversed_x.end());
-        former = identifier::build(reversed_o);
-        latter = identifier::build(reversed_x);
-    }
-    return {.former = former, .latter = shift_to_neg(latter)};
-}
-
 State::State() {
     o = {0x00, 0x02, 0x04, 0x06, 0x11, 0x13, 0x15, 0x22, 0x24};
     x = {0x53, 0x55, 0x62, 0x64, 0x66, 0x71, 0x73, 0x75, 0x77};
+    // Not reflected and already ordered
     build_token();
 }
 
-State::State(const vector<int> &_o, const vector<int> &_x, bool messy_o, bool messy_x) {
+State::State(const vector<int> &_o, const vector<int> &_x, bool omessy, bool xmessy) {
     o = _o;
     x = _x;
-    if (messy_o) std::sort(o.begin(), o.end());
-    if (messy_x) std::sort(x.begin(), x.end());
+    require_reflected_and_ordered(omessy, xmessy);
     build_token();
 }
 
@@ -81,18 +71,36 @@ State::State(const int board[8][8], int role) {
         }
     }
     // No need for sorting
+    require_reflected_and_ordered(false, false);
     build_token();
 }
 
-State State::opposite() const {
-    vector<int> oo = o, xx = x;
-    reverse(oo.begin(), oo.end());
-    reverse(xx.begin(), xx.end());
-    return State(rev_vec(oo), rev_vec(xx), false, false);
+void State::build_token() {
+    token.former = identifier::build(o);
+    token.latter = identifier::build(x);
 }
 
-#include <iostream>
-using namespace std;
+void State::require_reflected_and_ordered(bool omessy, bool xmessy) {
+    if (!is_reflected(o, x)) {
+        if (omessy) sort_vec(o);
+        if (xmessy) sort_vec(x);
+        return;
+    }
+    ref_vec(o);
+    ref_vec(x);
+    sort_vec(o);
+    sort_vec(x);
+}
+
+State State::opposite() const {
+    vector<int> oo = o, xx = x;  // copy
+    reverse(oo.begin(), oo.end());
+    reverse(xx.begin(), xx.end());
+    rev_vec(oo);
+    rev_vec(xx);
+    // Already ordered
+    return State(xx, oo, false, false);
+}
 
 // Output operator overloading
 // Not part of project
@@ -105,6 +113,7 @@ std::ostream &operator<<(std::ostream &output, const State &state) {
     for (int i : state.x_pieces()) {
         sq[row(i)][col(i)] = X;
     }
+
     output << "~ 0 1 2 3 4 5 6 7";
     for (int i = 7; i >= 0; i--) {
         output << "\n" << i;

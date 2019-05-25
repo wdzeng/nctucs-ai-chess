@@ -10,6 +10,7 @@
 #define qi std::piecewise_construct
 #define ls std::forward_as_tuple
 
+using std::find;
 using std::pair;
 using std::unordered_map;
 using std::vector;
@@ -74,10 +75,9 @@ void hop_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir
     vector<int> updated_o = o;  // copy
     replace_val(updated_o, src, dest);
 
-    if (shelf_col == X) {  // delete the hopped piece
-
+    if (shelf_col == X) {           // delete the hopped piece
         vector<int> updated_x = x;  // copy
-        updated_x.erase(find(x.begin(), x.end(), shelf_pos));
+        updated_x.erase(find(updated_x.begin(), updated_x.end(), shelf_pos));
         const auto &res = mapp.emplace(qi, ls(updated_o, updated_x, true, false), ls());
         if (!res.second) return;
 
@@ -87,10 +87,9 @@ void hop_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir
         hop(updated_o, updated_x, dest, mapp, next_path, ex);
     }
 
-    //
     else {  // hopped piece has same color
 
-        const auto res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
+        const auto &res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
         if (!res.second) return;
 
         // New child is found
@@ -127,6 +126,5 @@ const Expansion &expand_state(const State &s, Record &record) {
         hop(s.o_pieces(), s.x_pieces(), index, mapp, {index});
         move(s.o_pieces(), s.x_pieces(), index, mapp);
     }
-
     return mapp;
 }

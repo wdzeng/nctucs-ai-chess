@@ -2,8 +2,6 @@
 #include "game.h"
 using std::vector;
 
-#include <iostream>
-using namespace std;
 vector<int> Computer::play(const int board[8][8]) {
     const State s(board, role);
     if (role == O) return mm.best_step(s).second;
