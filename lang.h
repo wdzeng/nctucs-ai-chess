@@ -56,12 +56,14 @@ class State {
     std::vector<int> o;
     std::vector<int> x;
     identifier token;
+
+    State(const std::vector<int> &, const std::vector<int> &, bool = true, bool = true);
     static identifier build_token(const std::vector<int> &, const std::vector<int> &);
     void build_token() { token = build_token(o, x); }
 
    public:
     State();
-    State(const std::vector<int> &, const std::vector<int> &, bool = true, bool = true);
+    State(const std::vector<int> &, const std::vector<int> &, bool, bool);
     State(const int board[8][8], int);
     State opposite() const;
     int piece_at(int pos) const { return ox(pos, o, x); }

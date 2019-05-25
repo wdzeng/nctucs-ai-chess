@@ -3,10 +3,10 @@
 #include <unordered_set>
 #include <vector>
 #include "lang.h"
-#define EX_LEFT 1
-#define EX_RIGHT 2
-#define EX_BOTTOM 3
-#define EX_TOP 4
+#define EX_LEFT 0x123456
+#define EX_RIGHT ~EX_LEFT
+#define EX_BOTTOM 0xbababa
+#define EX_TOP ~EX_BOTTOM
 #define qi std::piecewise_construct
 #define ls std::forward_as_tuple
 
@@ -25,108 +25,108 @@ vector<int> &replace_val(vector<int> &v, int src, int dest) {
 }
 
 // ---------------------
-void move(const State &, int, Expansion &);
-void hop(const State &, int, Expansion &, const vector<int> &, int);
-void move_to(const State &, const int, int (*)(int), Expansion &);
-void hop_to(const State &, const int, int (*)(int), int, Expansion &, const vector<int> &);
+void move(const vector<int> &, const vector<int> &, int, Expansion &);
+void hop(const vector<int> &, const vector<int> &, int, Expansion &, const vector<int> &, int);
+void move_to(const vector<int> &, const vector<int> &, const int, int (*)(int), Expansion &);
+void hop_to(const vector<int> &, const int, int (*)(int), int, Expansion &, const vector<int> &);
 
-inline bool valid_move(const State &s, int src, int dest) {
-    //
-    return is_valid_index(dest) && ox(dest, s.o_pieces(), s.x_pieces()) == NONE;
+bool valid_move(const vector<int> &o, const vector<int> &x, int src, int dest) {  //
+    return is_valid_index(dest) && ox(dest, o, x) == NONE;
 }
 
-void move_to(const State &s, const int origin, int (*dir)(int), Expansion &mapp) {
-    int dest = dir(origin);
-    if (!valid_move(s, origin, dest)) return;
-
-    auto updated_o = s.o_pieces();
-    replace_val(updated_o, origin, dest);
-
-    // quick implementaion
-    const auto &res = mapp.emplace(qi, ls(updated_o, s.x_pieces(), true, false), ls());
-    if (res.second) {
-        auto &vec = res.first->second;
-        vec.push_back(origin);
-        vec.push_back(dest);
-    }
-    // State inserted(o, s.x_pieces(), true, false);
-    // mapp[inserted] = {origin, dest};
-}
-
-bool valid_hop(const State &s, int src, int dest, int &shelf_col) {
+bool valid_hop(const vector<int> &o, const vector<int> &x, int src, int dest, int &shelf_col) {
     // check destination
-    if (!is_valid_index(dest) || ox(dest, s.o_pieces(), s.x_pieces()) != NONE) return false;
+    if (!is_valid_index(dest) || ox(dest, o, x) != NONE) return false;
     // check shelf
-    int shelf_pos = (src + dest) / 2;
-    if (!is_valid_index(shelf_pos) || (shelf_col = ox(shelf_pos, s.o_pieces(), s.x_pieces())) == NONE) return false;
+    int shelf_pos = (src + dest) >> 1;  // half
+    if (!is_valid_index(shelf_pos) || (shelf_col = ox(shelf_pos, o, x)) == NONE) return false;
     return true;
 }
 
-void update_hopping_path(vector<int> &inserted, const vector<int> path, int dest) {
-    inserted.insert(inserted.end(), path.begin(), path.end());
-    inserted.push_back(dest);
+void move_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir)(int), Expansion &mapp) {
+    int dest = dir(src);
+    if (!valid_move(o, x, src, dest)) return;
+
+    vector<int> updated_o = o;  // copy
+    replace_val(updated_o, src, dest);
+
+    // quick implementaion
+    const auto &res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
+    if (res.second) {
+        // New child is found
+        auto &next_path = res.first->second;
+        next_path.push_back(src);
+        next_path.push_back(dest);
+    }
 }
 
-void hop_to(const State &s, const int origin, int (*dir)(int), int ex, Expansion &mapp, const vector<int> &path) {
-    int shelf_pos = dir(origin), dest = dir(shelf_pos), shelf_col;
-    if (!valid_hop(s, origin, dest, shelf_col)) return;
+void update_hopping_path(vector<int> &inserted, const vector<int> &path, int dest) {
+    inserted.insert(inserted.end(), path.begin(), path.end());  // copy
+    inserted.push_back(dest);                                   // append
+}
 
-    // quick implemetation, but messy
-    vector<int> updated_o = s.o_pieces();
-    replace_val(updated_o, origin, dest);
+void hop_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir)(int), int ex, Expansion &mapp,
+            const vector<int> &path) {
+    int shelf_pos = dir(src), dest = dir(shelf_pos), shelf_col;
+    if (!valid_hop(o, x, src, dest, shelf_col)) return;
 
-    if (shelf_col == X) {
-        vector<int> x = s.x_pieces();
-        x.erase(find(x.begin(), x.end(), shelf_pos));
-        const auto &res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
+    // quick implemetation
+    vector<int> updated_o = o;  // copy
+    replace_val(updated_o, src, dest);
+
+    if (shelf_col == X) {  // delete the hopped piece
+
+        vector<int> updated_x = x;  // copy
+        updated_x.erase(find(x.begin(), x.end(), shelf_pos));
+        const auto &res = mapp.emplace(qi, ls(updated_o, updated_x, true, false), ls());
         if (!res.second) return;
 
-        const auto &next_state = res.first->first;
-        const auto &vec = res.first->second;
-        update_hopping_path(res.first->second, path, dest);
-        hop(next_state, dest, mapp, vec, ex);
+        // New child is found
+        auto &next_path = res.first->second;
+        update_hopping_path(next_path, path, dest);
+        hop(updated_o, updated_x, dest, mapp, next_path, ex);
     }
 
     //
-    else {
-        const auto res = mapp.emplace(qi, ls(updated_o, s.x_pieces(), true, false), ls());
+    else {  // hopped piece has same color
+
+        const auto res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
         if (!res.second) return;
 
-        const auto &next_state = res.first->first;
-        const auto &vec = res.first->second;
-        update_hopping_path(res.first->second, path, dest);
-        hop(next_state, dest, mapp, vec, ex);
+        // New child is found
+        auto &next_path = res.first->second;
+        update_hopping_path(next_path, path, dest);
+        hop(updated_o, x, dest, mapp, next_path, ex);
     }
 }
 
-void move(const State &s, int origin, Expansion &mapp) {
-    move_to(s, origin, left, mapp);
-    move_to(s, origin, right, mapp);
-    move_to(s, origin, top, mapp);
-    move_to(s, origin, bottom, mapp);
+void move(const vector<int> &o, const vector<int> &x, int src, Expansion &mapp) {
+    move_to(o, x, src, left, mapp);
+    move_to(o, x, src, right, mapp);
+    move_to(o, x, src, top, mapp);
+    move_to(o, x, src, bottom, mapp);
 }
 
-void hop(const State &s, int origin, Expansion &mapp, const vector<int> &path, int ex = 0) {
-    if (ex != EX_LEFT) hop_to(s, origin, left, EX_RIGHT, mapp, path);
-    if (ex != EX_RIGHT) hop_to(s, origin, right, EX_LEFT, mapp, path);
-    if (ex != EX_TOP) hop_to(s, origin, top, EX_BOTTOM, mapp, path);
-    if (ex != EX_BOTTOM) hop_to(s, origin, bottom, EX_TOP, mapp, path);
+void hop(const vector<int> &o, const vector<int> &x, int src, Expansion &mapp, const vector<int> &path, int ex = 0) {
+    if (ex != EX_LEFT) hop_to(o, x, src, left, EX_RIGHT, mapp, path);
+    if (ex != EX_RIGHT) hop_to(o, x, src, right, EX_LEFT, mapp, path);
+    if (ex != EX_TOP) hop_to(o, x, src, top, EX_BOTTOM, mapp, path);
+    if (ex != EX_BOTTOM) hop_to(o, x, src, bottom, EX_TOP, mapp, path);
 }
 
 const Expansion &expand_state(const State &s, Record &record) {
     const auto &it = record.emplace(s, Expansion());
-    if (!it.second) {
-        return it.first->second;
-    }
+    if (!it.second) return it.first->second;
 
+    // No record found. Search it.
     // quick implementation
     Expansion &mapp = it.first->second;
     mapp[s] = {};
     for (int index : s.o_pieces()) {
         // first check hopping, then moving
-        hop(s, index, mapp, {index});
-        move(s, index, mapp);
+        hop(s.o_pieces(), s.x_pieces(), index, mapp, {index});
+        move(s.o_pieces(), s.x_pieces(), index, mapp);
     }
-    // mapp.erase(s);
+
     return mapp;
 }
