@@ -1,10 +1,8 @@
 #include <cstring>
-#include <iostream>
 #include <vector>
 #include "game.h"
 #define DRAW 3
 #define NONE 0
-using std::cout;
 using std::endl;
 using std::ostream;
 using std::vector;
@@ -91,8 +89,6 @@ bool Arena::is_valid_hop(int board[8][8], const vector<int>& steps, const int p)
 bool Arena::is_valid(int board[8][8], const vector<int>& steps, const int p) {
     if (steps.empty()) return true;
     if (steps.size() == 1) return false;
-    for (int i : steps) cout << i << " ";
-    cout << endl;
     if (!require_valid_indexes(steps)) return false;
     return is_valid_move(board, steps, p) || is_valid_hop(board, steps, p);
 }

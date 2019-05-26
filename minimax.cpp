@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
-#include <iostream>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -19,22 +18,20 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-#include <iostream>
-using namespace std;
-
-
 double Minimax::next_x(const State& s, const double lim_maxx, const int depth) {
     if (depth == 0) return h(s);
     const Expansion& expanded = expand_state(s.opposite(), record);
 
     // Check leaves
-    for (const Step& e : expanded /* reversed */) {
-        if (h(e.first) == MIN_HEURISTIC)  // which means x must win.
-            return MAX_HEURISTIC;
+    double safe = 0;
+    for (const Step& e : expanded /* reversed */) {  //
+        safe = min(safe, h(e.first));
     }
+    // If X has some step that must be safe, select this step and stop searching
+    if (safe <= SAFETY_HEURISTIC) return -1 * safe;
 
     // Search tree
-    double maxx = h(s);
+    double maxx = h(s);  // Current o's heursistic (skip)
     for (const Step& e : expanded) {
         const double h = next_o(e.first, maxx, depth - 1);
         if (h >= lim_maxx) return h;
@@ -43,17 +40,23 @@ double Minimax::next_x(const State& s, const double lim_maxx, const int depth) {
     return maxx;
 }
 
+#include <iostream>
+using namespace std;
+
 double Minimax::next_o(const State& s /* reversed */, const double lim_minn, const int depth) {
-    if (depth == 0) return -1.0 * h(s);  // Reversed
+    if (depth == 0) return -1.0 * h(s);  // Convert player x's heuristic ot o's heuristic
     const Expansion& expanded = expand_state(s.opposite(), record);
 
     // Check leaves
+    double safe = 0;
     for (const Step& e : expanded) {
-        if (h(e.first) == MIN_HEURISTIC) return MIN_HEURISTIC;
+        safe = min(safe, h(e.first));
     }
+    // If O has a step that must be safe, select this step
+    if (safe <= SAFETY_HEURISTIC) return safe;
 
     // Search tree
-    double minn = -1.0 * h(s);
+    double minn = -1.0 * h(s);  // Convert player x's heuristic ot o's heuristic
     for (const Step& e : expanded) {
         const double h = next_x(e.first, minn, depth - 1);
         if (h <= lim_minn) return h;
@@ -66,9 +69,16 @@ const Step& Minimax::best_step(const State& s) {
     const Expansion& expanded = expand_state(s, record);
 
     // Check leaves
+    double safe = 0;
+    Step* win_step = NULL;
     for (auto&& e : expanded) {
-        if (h(e.first) == MIN_HEURISTIC) return (Step&)e;
+        double hr = h(e.first);
+        if (hr < safe && hr <= SAFETY_HEURISTIC) {
+            safe = hr;
+            win_step = (Step*)&e;
+        }
     }
+    if (win_step) return *win_step;
 
     double minn = h(s);
     vector<Step*> candidates;
@@ -76,10 +86,7 @@ const Step& Minimax::best_step(const State& s) {
     // Serach tree
     for (auto&& e : expanded) {
         double h = next_x(e.first, minn, depth - 1);
-        // Check if this step must lead to winning
-        if (h == MIN_HEURISTIC) {
-            return (Step&)e;
-        }
+
         if (h < minn) {
             minn = h;
             candidates.clear();
@@ -88,8 +95,12 @@ const Step& Minimax::best_step(const State& s) {
             candidates.push_back((Step*)&e);
         }
     }
-    int random_index = rand() % candidates.size();
-    return *candidates[random_index];
+
+    if (candidates.empty()) {
+        auto&& it = record[s].find(s);
+        return (Step&)*it;
+    }
+    return *candidates[rand() % candidates.size()];
 }
 
 #endif
