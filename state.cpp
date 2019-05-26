@@ -1,12 +1,15 @@
 #include <algorithm>
 #include <cstring>
 #include <ostream>
+#include <string>
 #include <vector>
 #include "lang.h"
 
+using std::string;
+using std::to_string;
 using std::vector;
 
-bool is_reflected(const vector<int> &o, const vector<int> &x) {
+bool State::is_reflected(const vector<int> &o, const vector<int> &x) {
     if (o.empty()) {
         if (x.empty()) return false;
         return col(x[0]) >= 4;
@@ -75,7 +78,15 @@ State::State(const int board[8][8], int role) {
     build_token();
 }
 
+void require_sorted(const vector<int> &v) {
+    for (int i = 1; i < v.size(); i++) {
+        if (v[i] <= v[i - 1]) exit(-1);
+    }
+}
+
 void State::build_token() {
+    require_sorted(o);
+    require_sorted(x);
     token.former = identifier::build(o);
     token.latter = identifier::build(x);
 }
@@ -100,6 +111,25 @@ State State::opposite() const {
     rev_vec(xx);
     // Already ordered
     return State(xx, oo, false, false);
+}
+
+void tokenize(string &s, const vector<int> &v) {
+    int i = 0;
+    for (; i < v.size(); i++) {
+        s += to_string(row(v[i]));
+        s += to_string(col(v[i]));
+    }
+    for (; i < 9; i++) {
+        s += "--";
+    }
+}
+
+string State::get_token() const {
+    string ret;
+    tokenize(ret, o);
+    ret += " / ";
+    tokenize(ret, x);
+    return ret;
 }
 
 // Output operator overloading

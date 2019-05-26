@@ -5,6 +5,10 @@
 #include "calc.h"
 #include "lang.h"
 
+#define BLACK 1
+#define WHITE 2
+#define DRAW 3
+
 class Player {
    public:
     virtual std::vector<int> play(const int[8][8]) = 0;
@@ -30,9 +34,6 @@ class Human : public Player {
     std::vector<int> play(const int[8][8]) override;
 };
 
-#define BLACK 1
-#define WHITE 2
-#define DRAW 3
 class Arena {
    private:
     int board[8][8] = {NONE};
@@ -70,5 +71,16 @@ class Arena {
 };
 
 std::ostream& operator<<(std::ostream& output, const Arena& a);
+
+class Board {
+   private:
+    State s;
+    bool reflected;
+
+   public:
+    Board(const int[8][8], int);
+    const State& state() const { return s; }
+    bool is_reflected() const { return reflected; }
+};
 
 #endif

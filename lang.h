@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <ostream>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -12,8 +13,9 @@
 #define O 1
 #define X 2
 #define NONE 0
-#define MIN_HEURISTIC -1.0
-#define MAX_HEURISTIC 1.0
+#define SAFETY_HEURISTIC -1.0
+#define MIN_HEURISTIC -2.0
+#define MAX_HEURISTIC 2.0
 
 static inline int col(int index) { return index & 0x07; }
 static inline int row(int index) { return index >> 4; }
@@ -70,6 +72,8 @@ class State {
     const std::vector<int> &x_pieces() const { return x; }
     size_t hash() const { return token.former ^ token.latter; }
     bool operator==(const State &other) const { return token == other.token; }
+    std::string get_token() const;
+    static bool is_reflected(const std::vector<int> &, const std::vector<int> &);
 };
 
 std::ostream &operator<<(std::ostream &, const State &);
