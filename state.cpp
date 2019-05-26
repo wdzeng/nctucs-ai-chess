@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <bitset>
 #include <cstring>
 #include <ostream>
 #include <string>
@@ -15,27 +16,6 @@ bool State::is_reflected(const vector<int> &o, const vector<int> &x) {
         return col(x[0]) >= 4;
     }
     return col(o[0]) >= 4;
-}
-
-long identifier::build(const vector<int> &v) {
-    long ret = 0;
-    for (int i : v) {
-        ret <<= 3;
-        ret |= row(i);
-        ret <<= 3;
-        ret |= col(i);
-    }
-    ret <<= 4;
-    ret |= v.size();
-    return ret;
-}
-
-long shift_to_neg(long l) {
-    for (int i = 1; i < 64; i++) {
-        if (l < 0) break;
-        l <<= 1;
-    }
-    return l;
 }
 
 State::State() {
@@ -78,17 +58,67 @@ State::State(const int board[8][8], int role) {
     build_token();
 }
 
-void require_sorted(const vector<int> &v) {
-    for (int i = 1; i < v.size(); i++) {
-        if (v[i] <= v[i - 1]) exit(-1);
+State::State(unsigned long tok1, unsigned long tok2) {
+    // quick implementation
+    // no checking, backward
+
+    token_former = tok1;
+    token_latter = tok2;
+
+    const int osize = tok1 & 0x0F;
+    const int xsize = tok2 >> 60;
+    printf(": %d : %d\n", osize, xsize);
+    o.resize(osize);
+    x.resize(xsize);
+
+    // o
+    tok1 >>= 4;
+    for (int i = osize - 1; i >= 0; i--) {
+        const int c = tok1 & 0b111;
+        tok1 >>= 3;
+        const int r = tok1 & 0b111;
+        tok1 >>= 3;
+        o[i] = to_index(r, c);
+        printf("o[%d] = %d\n", i, o[i]);
+    }
+
+    // x
+    for (int i = xsize - 1; i >= 0; i--) {
+        const int c = tok2 & 0b111;
+        tok2 >>= 3;
+        const int r = tok2 & 0b111;
+        tok2 >>= 3;
+        x[i] = to_index(r, c);
     }
 }
 
 void State::build_token() {
-    require_sorted(o);
-    require_sorted(x);
-    token.former = identifier::build(o);
-    token.latter = identifier::build(x);
+    // build former token
+    // O: .... count
+    // X: count ....
+
+    // o, quick for loop
+    const int osize = o.size();
+    for (int i = 0; i < osize; i++) {
+        const int index = o[i];
+        token_former <<= 3;
+        token_former |= row(index);
+        token_former <<= 3;
+        token_former |= col(index);
+    }
+    token_former <<= 4;
+    token_former |= osize;
+
+    // x, quick for loop
+    const int xsize = x.size();
+    for (int i = 0; i < xsize; i++) {
+        const int index = x[i];
+        token_latter <<= 3;
+        token_latter |= row(index);
+        token_latter <<= 3;
+        token_latter |= col(index);
+    }
+    token_latter |= ((unsigned long)xsize << 60);
 }
 
 void State::require_reflected_and_ordered(bool omessy, bool xmessy) {
@@ -125,11 +155,7 @@ void tokenize(string &s, const vector<int> &v) {
 }
 
 string State::get_token() const {
-    string ret;
-    tokenize(ret, o);
-    ret += " / ";
-    tokenize(ret, x);
-    return ret;
+    return to_string(token_former) + " " + to_string(token_latter);
 }
 
 // Output operator overloading

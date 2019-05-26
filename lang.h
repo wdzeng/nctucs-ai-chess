@@ -48,17 +48,11 @@ static inline void sort_vec(std::vector<int> &v) {  //
 
 // State
 
-struct identifier {
-    long former, latter;
-    static long build(const std::vector<int> &);
-    bool operator==(const identifier &other) const { return former == other.former && latter == other.latter; }
-};
-
 class State {
    private:
     std::vector<int> o;
     std::vector<int> x;
-    identifier token;
+    unsigned long token_former = 0, token_latter = 0;
     void build_token();
     void require_reflected_and_ordered(bool, bool);
 
@@ -66,13 +60,18 @@ class State {
     State();
     State(const std::vector<int> &, const std::vector<int> &, bool, bool);
     State(const int board[8][8], int);
+    State(unsigned long, unsigned long);
     State opposite() const;
     int piece_at(int pos) const { return ox(pos, o, x); }
     const std::vector<int> &o_pieces() const { return o; }
     const std::vector<int> &x_pieces() const { return x; }
-    size_t hash() const { return token.former ^ token.latter; }
-    bool operator==(const State &other) const { return token == other.token; }
+    size_t hash() const { return token_former ^ token_latter; }
+    bool operator==(const State &other) const { return token_former == other.token_former && token_latter == other.token_latter; }
     std::string get_token() const;
+    void get_token(unsigned long *f, unsigned long *l) const {
+        *f = token_former;
+        *l = token_latter;
+    }
     static bool is_reflected(const std::vector<int> &, const std::vector<int> &);
 };
 
