@@ -65,22 +65,6 @@ void update_hopping_path(vector<int> &inserted, const vector<int> &path, int des
     inserted.insert(inserted.end(), path.begin(), path.end());  // copy
     inserted.push_back(dest);                                   // append
 }
-<<<<<<< HEAD
-
-void hop_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir)(int), int ex, Expansion &mapp,
-            const vector<int> &path) {
-    int shelf_pos = dir(src), dest = dir(shelf_pos), shelf_col;
-    if (!valid_hop(o, x, src, dest, shelf_col)) return;
-
-    // quick implemetation
-    vector<int> updated_o = o;  // copy
-    replace_val(updated_o, src, dest);
-
-    if (shelf_col == X) {  // delete the hopped piece
-
-        vector<int> updated_x = x;  // copy
-        updated_x.erase(find(x.begin(), x.end(), shelf_pos));
-=======
 
 void hop_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir)(int), int ex, Expansion &mapp,
             const vector<int> &path) {
@@ -94,7 +78,6 @@ void hop_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir
     if (shelf_col == X) {           // delete the hopped piece
         vector<int> updated_x = x;  // copy
         updated_x.erase(find(updated_x.begin(), updated_x.end(), shelf_pos));
->>>>>>> mirror
         const auto &res = mapp.emplace(qi, ls(updated_o, updated_x, true, false), ls());
         if (!res.second) return;
 
@@ -104,16 +87,9 @@ void hop_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir
         hop(updated_o, updated_x, dest, mapp, next_path, ex);
     }
 
-<<<<<<< HEAD
-    //
-    else {  // hopped piece has same color
-
-        const auto res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
-=======
     else {  // hopped piece has same color
 
         const auto &res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
->>>>>>> mirror
         if (!res.second) return;
 
         // New child is found
@@ -150,9 +126,5 @@ const Expansion &expand_state(const State &s, Record &record) {
         hop(s.o_pieces(), s.x_pieces(), index, mapp, {index});
         move(s.o_pieces(), s.x_pieces(), index, mapp);
     }
-<<<<<<< HEAD
-
-=======
->>>>>>> mirror
     return mapp;
 }

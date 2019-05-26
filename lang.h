@@ -59,15 +59,8 @@ class State {
     std::vector<int> o;
     std::vector<int> x;
     identifier token;
-<<<<<<< HEAD
-
-    State(const std::vector<int> &, const std::vector<int> &, bool = true, bool = true);
-    static identifier build_token(const std::vector<int> &, const std::vector<int> &);
-    void build_token() { token = build_token(o, x); }
-=======
     void build_token();
     void require_reflected_and_ordered(bool, bool);
->>>>>>> mirror
 
    public:
     State();
