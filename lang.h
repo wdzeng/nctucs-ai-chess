@@ -61,6 +61,7 @@ class State {
     State(const std::vector<int> &, const std::vector<int> &, bool, bool);
     State(const int board[8][8], int);
     State(unsigned long, unsigned long);
+    // State(const State &) { printf("Copy\n"); }
     State opposite() const;
     int piece_at(int pos) const { return ox(pos, o, x); }
     const std::vector<int> &o_pieces() const { return o; }

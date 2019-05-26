@@ -67,7 +67,6 @@ State::State(unsigned long tok1, unsigned long tok2) {
 
     const int osize = tok1 & 0x0F;
     const int xsize = tok2 >> 60;
-    printf(": %d : %d\n", osize, xsize);
     o.resize(osize);
     x.resize(xsize);
 
@@ -79,7 +78,6 @@ State::State(unsigned long tok1, unsigned long tok2) {
         const int r = tok1 & 0b111;
         tok1 >>= 3;
         o[i] = to_index(r, c);
-        printf("o[%d] = %d\n", i, o[i]);
     }
 
     // x

@@ -114,12 +114,14 @@ void hop(const vector<int> &o, const vector<int> &x, int src, Expansion &mapp, c
 }
 
 const Expansion &expand_state(const State &s, Record &record) {
-    const auto &it = record.emplace(s, Expansion());
-    if (!it.second) return it.first->second;
+    const auto &it = record.find(s);
+    if (it != record.end()) return record[s];
+    
+    record.emplace(s, Expansion());
 
     // No record found. Search it.
     // quick implementation
-    Expansion &mapp = it.first->second;
+    Expansion &mapp = record[s];
     mapp[s] = {};
     for (int index : s.o_pieces()) {
         // first check hopping, then moving
