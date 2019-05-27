@@ -31,7 +31,7 @@ double heuristic_x(const vector<int> &x, const int no, const int nx, int &xarr, 
     if (t_size == 0) return 0;
 
     int i = 0, hr = 0;
-    for (int i = 0; i < t_size; i++) {
+    for (; i < t_size; i++) {
         int d = max(0, row(x[i]) - 1);
         xdist += d;
         hr += d;
@@ -55,14 +55,13 @@ double simple_heuristic(const State &s) {
         if (oarr < xarr) return MAX_HEURISTIC;
         return 0;
     }
-
     if (oarr == nx) {
         // O must win or draw, heuristic in (-1, 0)
         return -1.0 + (double)(odist - xdist) / (odist + xdist);
     }
     if (xarr == no) {
         // X must win or draw, heuristic in (0, +1)
-        return +1.0 - (double)(xdist - xdist) / (odist + xdist);
+        return +1.0 - (double)(xdist - odist) / (odist + xdist);
     }
     if (oarr >= nx) {
         // O must win, heuristic in [-2, -1]

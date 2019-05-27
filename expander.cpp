@@ -4,9 +4,9 @@
 #include <vector>
 #include "lang.h"
 #define EX_LEFT 0x123456
-#define EX_RIGHT ~EX_LEFT
+#define EX_RIGHT 0x234567
 #define EX_BOTTOM 0xbababa
-#define EX_TOP ~EX_BOTTOM
+#define EX_TOP 0xababab
 #define qi std::piecewise_construct
 #define ls std::forward_as_tuple
 

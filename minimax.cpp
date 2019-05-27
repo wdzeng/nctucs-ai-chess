@@ -31,8 +31,9 @@ double Minimax::next_x(const State& s, const double lim_maxx, const int depth) {
     if (safe <= SAFETY_HEURISTIC) return -1 * safe;
 
     // Search tree
-    double maxx = h(s);  // Current o's heursistic (skip)
+    double maxx = MIN_HEURISTIC;  // Current o's heursistic (skip)
     for (const Step& e : expanded) {
+        // std::cout << e.first;
         const double h = next_o(e.first, maxx, depth - 1);
         if (h >= lim_maxx) return h;
         maxx = max(maxx, h);
@@ -41,7 +42,10 @@ double Minimax::next_x(const State& s, const double lim_maxx, const int depth) {
 }
 
 double Minimax::next_o(const State& s /* reversed */, const double lim_minn, const int depth) {
-    if (depth == 0) return -1.0 * h(s);  // Convert player x's heuristic ot o's heuristic
+    if (depth == 0) {
+        return -1.0 * h(s);
+    }
+
     const Expansion& expanded = expand_state(s.opposite(), record);
 
     // Check leaves
@@ -53,7 +57,7 @@ double Minimax::next_o(const State& s /* reversed */, const double lim_minn, con
     if (safe <= SAFETY_HEURISTIC) return safe;
 
     // Search tree
-    double minn = -1.0 * h(s);  // Convert player x's heuristic ot o's heuristic
+    double minn = MAX_HEURISTIC;  // Convert player x's heuristic ot o's heuristic
     for (const Step& e : expanded) {
         const double h = next_x(e.first, minn, depth - 1);
         if (h <= lim_minn) return h;
@@ -77,12 +81,13 @@ const Step& Minimax::best_step(const State& s) {
     }
     if (win_step) return *win_step;
 
-    double minn = h(s);
+    double minn = MAX_HEURISTIC;
     vector<Step*> candidates;
 
     // Serach tree
     for (auto&& e : expanded) {
         double h = next_x(e.first, minn, depth - 1);
+        // std::cout << e.first << std::endl << h << std::endl;
 
         if (h < minn) {
             minn = h;
