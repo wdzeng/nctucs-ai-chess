@@ -1,4 +1,5 @@
 #include <vector>
+#include <ctime>
 #include "game.h"
 #include "lang.h"
 using std::vector;
