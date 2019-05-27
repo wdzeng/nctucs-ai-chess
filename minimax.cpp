@@ -40,9 +40,6 @@ double Minimax::next_x(const State& s, const double lim_maxx, const int depth) {
     return maxx;
 }
 
-#include <iostream>
-using namespace std;
-
 double Minimax::next_o(const State& s /* reversed */, const double lim_minn, const int depth) {
     if (depth == 0) return -1.0 * h(s);  // Convert player x's heuristic ot o's heuristic
     const Expansion& expanded = expand_state(s.opposite(), record);

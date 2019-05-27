@@ -52,12 +52,11 @@ void move_to(const vector<int> &o, const vector<int> &x, const int src, int (*di
     replace_val(updated_o, src, dest);
 
     // quick implementaion
-    const auto &res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
-    if (res.second) {
+    State inserted(updated_o, x, true, false);
+    const auto &res = mapp.find(inserted);
+    if (res == mapp.end()) {
         // New child is found
-        auto &next_path = res.first->second;
-        next_path.push_back(src);
-        next_path.push_back(dest);
+        mapp[inserted] = {src, dest};
     }
 }
 
@@ -78,23 +77,27 @@ void hop_to(const vector<int> &o, const vector<int> &x, const int src, int (*dir
     if (shelf_col == X) {           // delete the hopped piece
         vector<int> updated_x = x;  // copy
         updated_x.erase(find(updated_x.begin(), updated_x.end(), shelf_pos));
-        const auto &res = mapp.emplace(qi, ls(updated_o, updated_x, true, false), ls());
-        if (!res.second) return;
+        State inserted(updated_o, updated_x, true, false);
+        const auto &res = mapp.find(inserted);
+        if (res != mapp.end()) return;
 
         // New child is found
-        auto &next_path = res.first->second;
+        vector<int> next_path = {};
         update_hopping_path(next_path, path, dest);
+        mapp[inserted] = next_path;
         hop(updated_o, updated_x, dest, mapp, next_path, ex);
     }
 
     else {  // hopped piece has same color
 
-        const auto &res = mapp.emplace(qi, ls(updated_o, x, true, false), ls());
-        if (!res.second) return;
+        State inserted(updated_o, x, true, false);
+        const auto &res = mapp.find(inserted);
+        if (res != mapp.end()) return;
 
         // New child is found
-        auto &next_path = res.first->second;
+        vector<int> next_path = {};
         update_hopping_path(next_path, path, dest);
+        mapp[inserted] = next_path;
         hop(updated_o, x, dest, mapp, next_path, ex);
     }
 }
@@ -116,7 +119,7 @@ void hop(const vector<int> &o, const vector<int> &x, int src, Expansion &mapp, c
 const Expansion &expand_state(const State &s, Record &record) {
     const auto &it = record.find(s);
     if (it != record.end()) return record[s];
-    
+
     record.emplace(s, Expansion());
 
     // No record found. Search it.

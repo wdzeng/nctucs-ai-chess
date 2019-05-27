@@ -87,6 +87,8 @@ bool Arena::is_valid_hop(int board[8][8], const vector<int>& steps, const int p)
 }
 
 bool Arena::is_valid(int board[8][8], const vector<int>& steps, const int p) {
+    for(int i: steps) printf("%02X " , i);
+    printf("\n");
     if (steps.empty()) return true;
     if (steps.size() == 1) return false;
     if (!require_valid_indexes(steps)) return false;

@@ -58,11 +58,11 @@ double simple_heuristic(const State &s) {
 
     if (oarr == nx) {
         // O must win or draw, heuristic in (-1, 0)
-        return -1.0 + (double)odist / (no * 6);
+        return -1.0 + (double)(odist - xdist) / (odist + xdist);
     }
     if (xarr == no) {
         // X must win or draw, heuristic in (0, +1)
-        return +1.0 - (double)xdist / (nx * 6);
+        return +1.0 - (double)(xdist - xdist) / (odist + xdist);
     }
     if (oarr >= nx) {
         // O must win, heuristic in [-2, -1]
