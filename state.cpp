@@ -1,13 +1,8 @@
 #include <algorithm>
-#include <bitset>
 #include <cstring>
-#include <ostream>
-#include <string>
 #include <vector>
 #include "lang.h"
 
-using std::string;
-using std::to_string;
 using std::vector;
 
 bool State::is_reflected(const vector<int> &o, const vector<int> &x) {
@@ -58,38 +53,6 @@ State::State(const int board[8][8], int role) {
     build_token();
 }
 
-State::State(unsigned long tok1, unsigned long tok2) {
-    // quick implementation
-    // no checking, backward
-
-    token_former = tok1;
-    token_latter = tok2;
-
-    const int osize = tok1 & 0x0F;
-    const int xsize = tok2 >> 60;
-    o.resize(osize);
-    x.resize(xsize);
-
-    // o
-    tok1 >>= 4;
-    for (int i = osize - 1; i >= 0; i--) {
-        const int c = tok1 & 0b111;
-        tok1 >>= 3;
-        const int r = tok1 & 0b111;
-        tok1 >>= 3;
-        o[i] = to_index(r, c);
-    }
-
-    // x
-    for (int i = xsize - 1; i >= 0; i--) {
-        const int c = tok2 & 0b111;
-        tok2 >>= 3;
-        const int r = tok2 & 0b111;
-        tok2 >>= 3;
-        x[i] = to_index(r, c);
-    }
-}
-
 void State::build_token() {
     // build former token
     // O: .... count
@@ -116,7 +79,7 @@ void State::build_token() {
         token_latter <<= 3;
         token_latter |= col(index);
     }
-    token_latter |= ((unsigned long)xsize << 60);
+    token_latter |= ((int64)xsize << 60);
 }
 
 void State::require_reflected_and_ordered(bool omessy, bool xmessy) {
@@ -139,47 +102,4 @@ State State::opposite() const {
     rev_vec(xx);
     // Already ordered
     return State(xx, oo, false, false);
-}
-
-void tokenize(string &s, const vector<int> &v) {
-    int i = 0;
-    for (; i < v.size(); i++) {
-        s += to_string(row(v[i]));
-        s += to_string(col(v[i]));
-    }
-    for (; i < 9; i++) {
-        s += "--";
-    }
-}
-
-string State::get_token() const {
-    return to_string(token_former) + " " + to_string(token_latter);
-}
-
-// Output operator overloading
-// Not part of project
-std::ostream &operator<<(std::ostream &output, const State &state) {
-    char sq[8][8];
-    memset(sq, NONE, sizeof(sq));
-    for (int i : state.o_pieces()) {
-        sq[row(i)][col(i)] = O;
-    }
-    for (int i : state.x_pieces()) {
-        sq[row(i)][col(i)] = X;
-    }
-
-    output << "~ 0 1 2 3 4 5 6 7";
-    for (int i = 7; i >= 0; i--) {
-        output << "\n" << i;
-        for (int j = 0; j < 8; j++) {
-            if (sq[i][j] == O)
-                output << " O";
-            else if (sq[i][j] == X)
-                output << " X";
-            else
-                output << " -";
-        }
-    }
-    output << "\n";
-    return output;
 }

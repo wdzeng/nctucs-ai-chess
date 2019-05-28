@@ -8,6 +8,8 @@
 #include "lang.h"
 typedef std::pair<State, std::vector<int>> Step;
 
+extern double simple_heuristic(const State&);
+
 class Minimax {
    private:
     const int depth;
@@ -17,11 +19,9 @@ class Minimax {
     double next_x(const State&, const double, const int);
 
    public:
-    Minimax(int d, double (*_h)(const State&), const Record& rec = {}) : depth(d), h(_h), record(rec) {}
+    Minimax(int d, double (*_h)(const State&) = simple_heuristic) : depth(d), h(_h) {}
     const Record& explored() const { return record; }
     const Step& best_step(const State& s);
 };
-
-double simple_heuristic(const State& s);
 
 #endif

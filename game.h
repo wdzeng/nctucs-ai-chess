@@ -70,7 +70,7 @@ class Arena {
     int victor() const { return vtr; }
 };
 
-std::ostream& operator<<(std::ostream& output, const Arena& a);
+extern std::ostream& operator<<(std::ostream& output, const Arena& a);
 
 class Board {
    private:
