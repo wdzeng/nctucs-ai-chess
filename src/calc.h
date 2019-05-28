@@ -8,7 +8,7 @@
 #include "lang.h"
 typedef std::pair<State, std::vector<int>> Step;
 
-extern double simple_heuristic(const State&);
+double simple_heuristic(const State&);
 
 class Minimax {
    private:

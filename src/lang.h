@@ -68,6 +68,6 @@ struct hash<State> {
 
 typedef std::unordered_map<State, std::vector<int>> Expansion;
 typedef std::unordered_map<State, Expansion> Record;
-extern const Expansion &expand_state(const State &, Record &);
+const Expansion &expand_state(const State &, Record &);
 
 #endif
